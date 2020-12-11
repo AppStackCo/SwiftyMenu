@@ -586,17 +586,17 @@ extension SwiftyMenu {
     
     public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
                 
-        print(point)
-        print(bounds)
+//        print(point)
+//        print(bounds)
                 
         // extend touchable area when menu is shown
-//        if case .shown = state {
+        if case .shown = state {
             let newBounds = bounds.inset(by: UIEdgeInsets(top: 0, left: 0, bottom: -CGFloat(items.count) * CGFloat(rowHeight), right: 0))
-            print(newBounds)
+//            print(newBounds)
             return newBounds.contains(point)
-//        }
-//
-//        return super.point(inside: point, with: event)
+        }
+
+        return super.point(inside: point, with: event)
     }
     
 }
