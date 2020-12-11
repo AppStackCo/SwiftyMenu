@@ -29,10 +29,6 @@ import SnapKit
 /// `SwiftyMenu` is the menu class that provides common state, delegate, and callbacks handling.
 final public class SwiftyMenu: UIView {
     
-    // MARK: - IBOutlets
-    
-    @IBOutlet public var heightConstraint: NSLayoutConstraint!
-    
     // MARK: - Public Properties
     
     /// `selectedIndex` is a property to get and set selected item in `SwiftyMenu` when it is a Single Selection.
@@ -216,6 +212,8 @@ final public class SwiftyMenu: UIView {
     private var height: CGFloat!
     private var setuped: Bool = false
     
+    private var itemTableViewHeightConstraint: Constraint? = nil
+    
     // MARK: - Init
     
     public override init(frame: CGRect) {
@@ -356,7 +354,6 @@ extension SwiftyMenu {
     }
     
     private func setupView() {
-        clipsToBounds = true
         layer.cornerRadius = cornerRadius
         layer.borderWidth = borderWidth
         layer.borderColor = borderColor.cgColor
@@ -405,13 +402,15 @@ extension SwiftyMenu {
         
         selectButton.addTarget(self, action: #selector(handleMenuState), for: .touchUpInside)
     }
-    
+        
     private func setupDataTableView() {
         self.addSubview(itemsTableView)
         
         itemsTableView.snp.makeConstraints { maker in
-            maker.leading.trailing.bottom.equalTo(self)
+            maker.leading.trailing.equalTo(self)
             maker.top.equalTo(selectButton.snp.bottom).offset(4)
+            
+            self.itemTableViewHeightConstraint = maker.height.equalTo(0).constraint
         }
         
         itemsTableView.delegate = self
@@ -502,7 +501,10 @@ extension SwiftyMenu {
     private func expandSwiftyMenu() {
         delegate?.swiftyMenu(willExpand: self)
         self.willExpand()
-        heightConstraint.constant = listHeight == 0 || !scrollingEnabled || (CGFloat(rowHeight * Double(items.count + 1)) < CGFloat(listHeight)) ? CGFloat(rowHeight * Double(items.count + 1)) : CGFloat(listHeight)
+        
+//        heightConstraint.constant = listHeight == 0 || !scrollingEnabled || (CGFloat(rowHeight * Double(items.count + 1)) < CGFloat(listHeight)) ? CGFloat(rowHeight * Double(items.count + 1)) : CGFloat(listHeight)
+        
+        itemTableViewHeightConstraint?.update(offset: Double(items.count) * rowHeight)
         
         switch expandingAnimationStyle {
         case .linear:
@@ -529,7 +531,9 @@ extension SwiftyMenu {
     private func collapseSwiftyMenu() {
         delegate?.swiftyMenu(willCollapse: self)
         self.willCollapse()
-        heightConstraint.constant = CGFloat(rowHeight)
+        
+//        heightConstraint.constant = CGFloat(rowHeight)
+        itemTableViewHeightConstraint?.update(offset: 0)
         
         switch collapsingAnimationStyle {
         case .linear:
@@ -576,4 +580,23 @@ extension SwiftyMenu {
             self.didCollapse()
         }
     }
+}
+
+extension SwiftyMenu {
+    
+    public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+                
+        print(point)
+        print(bounds)
+                
+        // extend touchable area when menu is shown
+//        if case .shown = state {
+            let newBounds = bounds.inset(by: UIEdgeInsets(top: 0, left: 0, bottom: -CGFloat(items.count) * CGFloat(rowHeight), right: 0))
+            print(newBounds)
+            return newBounds.contains(point)
+//        }
+//
+//        return super.point(inside: point, with: event)
+    }
+    
 }
