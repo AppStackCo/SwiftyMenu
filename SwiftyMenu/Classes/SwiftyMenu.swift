@@ -29,10 +29,6 @@ import SnapKit
 /// `SwiftyMenu` is the menu class that provides common state, delegate, and callbacks handling.
 final public class SwiftyMenu: UIView {
     
-    // MARK: - IBOutlets
-    
-    @IBOutlet public var heightConstraint: NSLayoutConstraint!
-    
     // MARK: - Public Properties
     
     /// `selectedIndex` is a property to get and set selected item in `SwiftyMenu` when it is a Single Selection.
@@ -203,6 +199,10 @@ final public class SwiftyMenu: UIView {
     /// Determine collapsing animation style for `SwiftyMenu`.
     public var collapsingAnimationStyle: AnimationStyle = .linear
     
+    /// menu font
+    public var font: UIFont = UIFont.systemFont(ofSize: 12)
+    
+    
     // MARK: - Private Properties
     
     private var selectButton: UIButton!
@@ -211,6 +211,8 @@ final public class SwiftyMenu: UIView {
     private var width: CGFloat!
     private var height: CGFloat!
     private var setuped: Bool = false
+    
+    private var itemTableViewHeightConstraint: Constraint? = nil
     
     // MARK: - Init
     
@@ -262,7 +264,7 @@ extension SwiftyMenu: UITableViewDataSource {
             let cell = tableView.dequeueReusableCell(withIdentifier: "OptionCell", for: indexPath)
             cell.textLabel?.text = items[indexPath.row].displayableValue
             cell.textLabel?.textColor = itemTextColor
-            cell.textLabel?.font = UIFont.systemFont(ofSize: 12)
+            cell.textLabel?.font = font
             cell.tintColor = itemTextColor
             cell.backgroundColor = rowBackgroundColor
             cell.accessoryType = selectedIndecis[indexPath.row] != nil ? .checkmark : .none
@@ -272,10 +274,11 @@ extension SwiftyMenu: UITableViewDataSource {
             let cell = tableView.dequeueReusableCell(withIdentifier: "OptionCell", for: indexPath)
             cell.textLabel?.text = items[indexPath.row].displayableValue
             cell.textLabel?.textColor = itemTextColor
-            cell.textLabel?.font = UIFont.systemFont(ofSize: 12)
+            cell.textLabel?.font = font
+            cell.textLabel?.textAlignment = .center
             cell.tintColor = itemTextColor
             cell.backgroundColor = rowBackgroundColor
-            cell.accessoryType = indexPath.row == selectedIndex ? .checkmark : .none
+//            cell.accessoryType = indexPath.row == selectedIndex ? .checkmark : .none
             cell.selectionStyle = .none
             return cell
         }
@@ -313,7 +316,7 @@ extension SwiftyMenu: UITableViewDelegate {
         } else {
             if selectedIndex == indexPath.row {
                 if hideOptionsWhenSelect {
-                    collapseSwiftyMenu()
+                    toggle()
                 }
             } else {
                 selectedIndex = indexPath.row
@@ -323,7 +326,7 @@ extension SwiftyMenu: UITableViewDelegate {
                 self.didSelectItem(self, selectedText, indexPath.row)
                 tableView.reloadData()
                 if hideOptionsWhenSelect {
-                    collapseSwiftyMenu()
+                    toggle()
                 }
             }
         }
@@ -351,7 +354,6 @@ extension SwiftyMenu {
     }
     
     private func setupView() {
-        clipsToBounds = true
         layer.cornerRadius = cornerRadius
         layer.borderWidth = borderWidth
         layer.borderColor = borderColor.cgColor
@@ -371,7 +373,8 @@ extension SwiftyMenu {
             selectButton.setTitle(placeHolderText, for: .normal)
             selectButton.layoutIfNeeded()
         }
-        selectButton.titleLabel?.font = UIFont.systemFont(ofSize: 12)
+        
+        selectButton.titleLabel?.font = font
         if UIView.userInterfaceLayoutDirection(for: selectButton.semanticContentAttribute) == .rightToLeft {
             selectButton.imageEdgeInsets.right = width - 16
             selectButton.titleEdgeInsets.left = 32
@@ -391,21 +394,23 @@ extension SwiftyMenu {
             selectButton.titleEdgeInsets.left = 16
         }
         
-        if #available(iOS 11.0, *) {
-            selectButton.contentHorizontalAlignment = .leading
-        } else {
-            selectButton.contentHorizontalAlignment = .left
-        }
+        selectButton.contentHorizontalAlignment = .center
+        
+        selectButton.layer.borderWidth = 1
+        selectButton.layer.borderColor = UIColor.white.cgColor
+        selectButton.layer.cornerRadius = 12
         
         selectButton.addTarget(self, action: #selector(handleMenuState), for: .touchUpInside)
     }
-    
+        
     private func setupDataTableView() {
         self.addSubview(itemsTableView)
         
         itemsTableView.snp.makeConstraints { maker in
-            maker.leading.trailing.bottom.equalTo(self)
-            maker.top.equalTo(selectButton.snp.bottom)
+            maker.leading.trailing.equalTo(self)
+            maker.top.equalTo(selectButton.snp.bottom).offset(4)
+            
+            self.itemTableViewHeightConstraint = maker.height.equalTo(0).constraint
         }
         
         itemsTableView.delegate = self
@@ -417,6 +422,8 @@ extension SwiftyMenu {
         itemsTableView.isScrollEnabled = scrollingEnabled
         itemsTableView.register(UITableViewCell.self, forCellReuseIdentifier: "OptionCell")
         itemsTableView.showsVerticalScrollIndicator = false
+        
+        itemsTableView.layer.cornerRadius = 12
     }
     
     @objc private func handleMenuState() {
@@ -451,7 +458,7 @@ extension SwiftyMenu {
             selectButton.setTitle(selectedTitle, for: .normal)
             selectButton.layoutIfNeeded()
         }
-        selectButton.setTitleColor(itemTextColor, for: .normal)
+        selectButton.setTitleColor(placeHolderColor, for: .normal)
     }
     
     private func setSingleSelectedOption() {
@@ -459,7 +466,7 @@ extension SwiftyMenu {
             selectButton.setTitle(items[selectedIndex!].displayableValue, for: .normal)
             selectButton.layoutIfNeeded()
         }
-        selectButton.setTitleColor(itemTextColor, for: .normal)
+        selectButton.setTitleColor(placeHolderColor, for: .normal)
     }
     
     private func setPlaceholder() {
@@ -494,7 +501,10 @@ extension SwiftyMenu {
     private func expandSwiftyMenu() {
         delegate?.swiftyMenu(willExpand: self)
         self.willExpand()
-        heightConstraint.constant = listHeight == 0 || !scrollingEnabled || (CGFloat(rowHeight * Double(items.count + 1)) < CGFloat(listHeight)) ? CGFloat(rowHeight * Double(items.count + 1)) : CGFloat(listHeight)
+        
+//        heightConstraint.constant = listHeight == 0 || !scrollingEnabled || (CGFloat(rowHeight * Double(items.count + 1)) < CGFloat(listHeight)) ? CGFloat(rowHeight * Double(items.count + 1)) : CGFloat(listHeight)
+        
+        itemTableViewHeightConstraint?.update(offset: Double(items.count) * rowHeight)
         
         switch expandingAnimationStyle {
         case .linear:
@@ -521,7 +531,9 @@ extension SwiftyMenu {
     private func collapseSwiftyMenu() {
         delegate?.swiftyMenu(willCollapse: self)
         self.willCollapse()
-        heightConstraint.constant = CGFloat(rowHeight)
+        
+//        heightConstraint.constant = CGFloat(rowHeight)
+        itemTableViewHeightConstraint?.update(offset: 0)
         
         switch collapsingAnimationStyle {
         case .linear:
@@ -568,4 +580,23 @@ extension SwiftyMenu {
             self.didCollapse()
         }
     }
+}
+
+extension SwiftyMenu {
+    
+    public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+                
+//        print(point)
+//        print(bounds)
+                
+        // extend touchable area when menu is shown
+        if case .shown = state {
+            let newBounds = bounds.inset(by: UIEdgeInsets(top: 0, left: 0, bottom: -CGFloat(items.count) * CGFloat(rowHeight), right: 0))
+//            print(newBounds)
+            return newBounds.contains(point)
+        }
+
+        return super.point(inside: point, with: event)
+    }
+    
 }
