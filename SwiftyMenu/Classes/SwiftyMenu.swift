@@ -202,6 +202,7 @@ final public class SwiftyMenu: UIView {
     /// menu font
     public var font: UIFont = UIFont.systemFont(ofSize: 12)
     
+    @IBInspectable public var maxVisibleCount: Int = 5
     
     // MARK: - Private Properties
     
@@ -504,7 +505,10 @@ extension SwiftyMenu {
         
 //        heightConstraint.constant = listHeight == 0 || !scrollingEnabled || (CGFloat(rowHeight * Double(items.count + 1)) < CGFloat(listHeight)) ? CGFloat(rowHeight * Double(items.count + 1)) : CGFloat(listHeight)
         
-        itemTableViewHeightConstraint?.update(offset: Double(items.count) * rowHeight)
+        let itemCount = maxVisibleCount < items.count
+            ? Double(maxVisibleCount) + 0.70
+            : Double(items.count)
+        itemTableViewHeightConstraint?.update(offset: Double(itemCount) * rowHeight)
         
         switch expandingAnimationStyle {
         case .linear:
