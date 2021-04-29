@@ -379,10 +379,12 @@ extension SwiftyMenu {
         if UIView.userInterfaceLayoutDirection(for: selectButton.semanticContentAttribute) == .rightToLeft {
             selectButton.imageEdgeInsets.right = width - 16
             selectButton.titleEdgeInsets.left = 32
+            selectButton.titleEdgeInsets.right = 32
             selectButton.titleLabel?.lineBreakMode = .byTruncatingHead
         } else {
             selectButton.imageEdgeInsets.left = width - 16
             selectButton.titleEdgeInsets.right = 32
+            selectButton.titleEdgeInsets.left = 32
             selectButton.titleLabel?.lineBreakMode = .byTruncatingTail
         }
         selectButton.backgroundColor = menuHeaderBackgroundColor
@@ -393,6 +395,7 @@ extension SwiftyMenu {
         
         if arrow == nil {
             selectButton.titleEdgeInsets.left = 16
+            selectButton.titleEdgeInsets.right = 16
         }
         
         selectButton.contentHorizontalAlignment = .center
