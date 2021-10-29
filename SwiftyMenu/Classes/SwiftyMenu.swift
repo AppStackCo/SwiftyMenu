@@ -202,6 +202,7 @@ final public class SwiftyMenu: UIView {
     /// menu font
     public var font: UIFont = UIFont.systemFont(ofSize: 12)
     
+    @IBInspectable public var maxVisibleCount: Int = 5
     
     // MARK: - Private Properties
     
@@ -378,10 +379,12 @@ extension SwiftyMenu {
         if UIView.userInterfaceLayoutDirection(for: selectButton.semanticContentAttribute) == .rightToLeft {
             selectButton.imageEdgeInsets.right = width - 16
             selectButton.titleEdgeInsets.left = 32
+            selectButton.titleEdgeInsets.right = 32
             selectButton.titleLabel?.lineBreakMode = .byTruncatingHead
         } else {
             selectButton.imageEdgeInsets.left = width - 16
             selectButton.titleEdgeInsets.right = 32
+            selectButton.titleEdgeInsets.left = 32
             selectButton.titleLabel?.lineBreakMode = .byTruncatingTail
         }
         selectButton.backgroundColor = menuHeaderBackgroundColor
@@ -392,6 +395,7 @@ extension SwiftyMenu {
         
         if arrow == nil {
             selectButton.titleEdgeInsets.left = 16
+            selectButton.titleEdgeInsets.right = 16
         }
         
         selectButton.contentHorizontalAlignment = .center
@@ -504,7 +508,10 @@ extension SwiftyMenu {
         
 //        heightConstraint.constant = listHeight == 0 || !scrollingEnabled || (CGFloat(rowHeight * Double(items.count + 1)) < CGFloat(listHeight)) ? CGFloat(rowHeight * Double(items.count + 1)) : CGFloat(listHeight)
         
-        itemTableViewHeightConstraint?.update(offset: Double(items.count) * rowHeight)
+        let itemCount = maxVisibleCount < items.count
+            ? Double(maxVisibleCount) + 0.70
+            : Double(items.count)
+        itemTableViewHeightConstraint?.update(offset: Double(itemCount) * rowHeight)
         
         switch expandingAnimationStyle {
         case .linear:
